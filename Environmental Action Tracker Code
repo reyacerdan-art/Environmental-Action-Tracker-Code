@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Environmental Action Tracker</title>
+<style>
+body { font-family: sans-serif; max-width: 450px; margin: 30px auto; padding: 20px; border: 1px solid #006400; border-radius: 8px; background-color: #f7fff7; }
+h1 { color: #006400; text-align: center; }
+input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 10px; margin: 8px 0 20px 0; display: inline-block; border: 1px solid #a8d5a8; border-radius: 4px; box-sizing: border-box; }
+button { background-color: #38761D; color: white; padding: 14px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-size: 16px; }
+button:hover { background-color: #4b922a; }
+#output { margin-top: 20px; padding: 15px; border-radius: 4px; }
+.success { background-color: #e6ffe6; color: #006400; border: 1px solid #006400; }
+.error { background-color: #ffe6e6; color: #cc0000; border: 1px solid #cc0000; }
+</style>
+</head>
+<body>
+<h1>🌿 Environmental Action Log</h1>
+
+<form id="actionForm">
+<label for="project">Project Name / Item:</label>
+<input type="text" id="project" required>
+
+<label for="actionType">Action Type:</label>
+<select id="actionType" required>
+<option value="" disabled selected>Select an Action</option>
+<option value="Reduce">Reduce Waste/Energy</option>
+<option value="Reuse">Reuse/Repair</option>
+<option value="Recycle">Recycle</option>
+<option value="Plant">Plant Trees/Gardening</option>
+</select>
+
+<label for="impactValue">Impact Value (e.g., kg CO₂ saved, items recycled):</label>
+<input type="number" id="impactValue" min="0" step="any" required>
+
+<label for="notes">Notes/Description:</label>
+<textarea id="notes" rows="3" required></textarea>
+
+<button type="submit">LOG ACTION</button>
+</form>
+
+<div id="output"></div>
+
+<script>
+// --- FUNCTION DEFINITION ---
+function logEnvironmentalAction(project, actionType, impactString, notes) {
+    if (!project || !actionType || !impactString || !notes) {
+        return { success: false, message: "Error: All fields are required." };
+    }
+
+    const impact = parseFloat(impactString);
+    if (isNaN(impact) || impact < 0) {
+        return { success: false, message: "Error: Impact Value must be a positive number." };
+    }
+    if (notes.length > 300) {
+        return { success: false, message: "Error: Notes must be under 300 characters." };
+    }
+
+    let unit = "";
+    let impactText = "";
+
+    // Determine the unit and custom message based on action type
+    switch(actionType) {
+        case 'Reduce':
+            unit = "kg CO₂";
+            impactText = `Estimated ${impact.toFixed(2)} kg of CO₂ emissions avoided.`;
+            break;
+        case 'Reuse':
+            unit = "Items";
+            impactText = `Prevented ${impact} item(s) from becoming waste.`;
+            break;
+        case 'Recycle':
+            unit = "kg";
+            impactText = `Recycled ${impact.toFixed(2)} kg of material.`;
+            break;
+        case 'Plant':
+            unit = "Trees/Plants";
+            impactText = `Planted ${impact} tree(s) or plant(s).`;
+            break;
+    }
+
+    const processedData = {
+        project: project.trim(),
+        type: actionType,
+        impact: impact,
+        unit: unit,
+        impactSummary: impactText,
+        notes: notes.trim(),
+        date: new Date().toLocaleDateString()
+    };
+
+    return {
+        success: true,
+        message: "Environmental action successfully logged.",
+        data: processedData
+    };
+}
+
+// --- EVENT LISTENER ---
+document.getElementById('actionForm').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    // Get RAW input values
+    const projectInput = document.getElementById('project').value;
+    const actionTypeInput = document.getElementById('actionType').value;
+    const impactValueInput = document.getElementById('impactValue').value;
+    const notesInput = document.getElementById('notes').value;
+
+    // Run the logging function
+    const processingResult = logEnvironmentalAction(
+        projectInput,
+        actionTypeInput,
+        impactValueInput,
+        notesInput
+    );
+
+    const outputDiv = document.getElementById('output');
+    outputDiv.innerHTML = ''; // Clear previous output
+
+    // Handle the result
+    if (processingResult.success) {
+        const data = processingResult.data;
+        outputDiv.className = 'success';
+        outputDiv.innerHTML = `
+            <h3>✅ Action Logged Successfully!</h3>
+            <p><strong>Date:</strong> ${data.date}</p>
+            <p><strong>Project:</strong> ${data.project}</p>
+            <p><strong>Action:</strong> ${data.type}</p>
+            <p><strong>Impact:</strong> ${data.impactSummary}</p>
+            <p><strong>Notes:</strong> ${data.notes}</p>
+        `;
+        // Clear form on success
+        this.reset();
+        document.getElementById('actionType').value = ""; // Reset dropdown
+    } else {
+        outputDiv.className = 'error';
+        outputDiv.innerHTML = `
+            <h3>❌ Validation Error:</h3>
+            <p>${processingResult.message}</p>
+        `;
+    }
+});
+</script>
+</body>
+</html>
